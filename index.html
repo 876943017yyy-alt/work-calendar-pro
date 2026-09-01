@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f7f5ef">
+  <title>工作日历pro</title>
+  <link rel="icon" type="image/png" href="assets/work-calendar-pro-icon.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand-area">
+        <button class="menu-button" id="menuBtn" type="button" aria-label="打开菜单" aria-expanded="false"><i></i><i></i><i></i></button>
+        <a class="brand" href="#" aria-label="回到今天">
+          <span class="brand-mark image-mark"><img src="assets/work-calendar-pro-icon.png" alt=""></span>
+          <span><strong>工作日历<b>pro</b></strong><small>让每一段时间，都有价值。 Every hour counts.</small></span>
+        </a>
+      </div>
+      <div class="top-actions">
+        <button class="button ghost" id="todayBtn" type="button">回到今天</button>
+        <button class="button ghost" id="nlToggleBtn" type="button">✦ 智能录入</button>
+        <button class="button primary" id="addBtn" type="button"><span>＋</span> 新建日程</button>
+      </div>
+    </header>
+
+    <section class="nl-panel hidden" id="nlPanel" aria-label="自然语言创建日程">
+      <span class="nl-spark">✦</span>
+      <div class="nl-copy"><strong>智能录入日程</strong><small>日期、时间、收入必填；可写多天、时间段、标签和客户</small></div>
+      <input id="nlInput" type="text" placeholder="例如：9.1-9.3 10:00-12:00 雅思助教 家教 收入300 线下" autocomplete="off">
+      <button class="button primary" id="nlParseBtn" type="button">识别并创建</button>
+      <button class="icon-button" id="nlCloseBtn" type="button" aria-label="关闭智能录入">×</button>
+    </section>
+
+    <main id="calendarPage">
+      <section class="summary" id="summarySection" aria-label="本月概览">
+        <article class="summary-card hero-card stat-link" data-stat-focus="income" tabindex="0" role="button" aria-label="查看收入统计">
+          <div>
+            <span class="eyebrow">本月目标与实际收入</span>
+            <strong id="monthIncome">¥0.00</strong>
+            <small class="income-target-caption" id="incomeTargetCaption">尚未设置目标</small>
+            <span class="income-target-progress"><i id="incomeTargetProgress"></i></span>
+            <small class="share-caption" id="incomeTagCaption">暂无标签占比</small>
+          </div>
+          <div class="income-target-actions"><button class="target-edit-button" id="setIncomeTarget" type="button">设置目标</button><div class="donut-chart light" id="incomeTagChart" aria-label="各标签收入占比"></div><div class="target-popover hidden" id="incomeTargetPopover"><b>设置本月目标</b><input id="incomeTargetInput" type="number" min="0" step="100" placeholder="例如 10000"><div><button class="mini-button" id="cancelIncomeTarget" type="button">取消</button><button class="mini-button target-save" id="saveIncomeTarget" type="button">保存</button></div></div></div>
+        </article>
+        <article class="summary-card stat-link" data-stat-focus="count" tabindex="0" role="button" aria-label="查看有收入日程统计">
+          <div class="donut-chart" id="countTagChart" aria-label="各标签有收入日程占比"></div>
+          <div><span class="eyebrow">本月有收入日程</span><strong id="monthCount">0 <em>个</em></strong><small class="share-caption" id="countTagCaption">暂无标签占比</small></div>
+        </article>
+        <article class="summary-card stat-link" data-stat-focus="hours" tabindex="0" role="button" aria-label="查看工时统计">
+          <div class="donut-chart" id="hoursTagChart" aria-label="各标签工时占比"></div>
+          <div><span class="eyebrow">本月工时</span><strong id="monthHours">0 <em>小时</em></strong><small class="share-caption" id="hoursTagCaption">暂无标签占比</small></div>
+        </article>
+      </section>
+      <button class="overview-chevron" id="overviewToggle" type="button" aria-label="收起概览" aria-expanded="true"><span></span></button>
+
+      <section class="workspace">
+        <div class="calendar-panel">
+          <div class="calendar-toolbar">
+            <div class="month-nav">
+              <button class="icon-button" id="prevMonth" type="button" aria-label="上个月">‹</button>
+              <h1 id="monthTitle" title="点击选择日期">2026年 8月</h1>
+              <button class="icon-button" id="nextMonth" type="button" aria-label="下个月">›</button>
+              <div class="date-navigator hidden" id="dateNavigator">
+                <div class="date-navigator-head"><button id="dateNavigatorPrev" type="button" aria-label="上个月">‹</button><b id="dateNavigatorTitle">2026年 8月</b><button id="dateNavigatorNext" type="button" aria-label="下个月">›</button></div>
+                <div class="date-navigator-week"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
+                <div class="date-navigator-grid" id="dateNavigatorGrid"></div>
+                <button class="date-navigator-today" id="dateNavigatorToday" type="button">回到今天</button>
+              </div>
+            </div>
+            <div class="calendar-tools">
+              <button class="button ghost export-week-button" id="exportWeekBtn" type="button">输出日程</button>
+              <div class="view-switch" aria-label="日历视图">
+                <button class="active" id="monthViewBtn" type="button">月</button>
+                <button id="weekViewBtn" type="button">周</button>
+              </div>
+            </div>
+          </div>
+          <div class="calendar-scroll" id="calendarScroll">
+            <div class="weekdays" id="weekdays" aria-hidden="true">
+              <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
+            </div>
+            <div class="calendar-grid" id="calendarGrid" role="grid" aria-label="月历"></div>
+          </div>
+          <div class="week-scrubber hidden" id="weekScrubberWrap"><button id="weekPrevButton" type="button" aria-label="上一周">‹ 上一周</button><span class="week-scrubber-hint">切换周</span><button id="weekNextButton" type="button" aria-label="下一周">下一周 ›</button></div>
+        </div>
+
+        <aside class="day-panel">
+          <div id="dayOverview">
+            <div class="day-heading">
+              <div><span class="eyebrow" id="selectedWeekday">星期六</span><h2 id="selectedDate">8月29日</h2></div>
+              <button class="icon-button small" id="addForDayBtn" type="button" aria-label="为当天新建日程">＋</button>
+            </div>
+            <div class="day-total">
+              <span>当日预计收入</span><strong id="dayIncome">¥0.00</strong>
+            </div>
+            <div class="event-list" id="eventList"></div>
+          </div>
+
+          <div class="sidebar-editor hidden" id="sidebarEditor">
+            <form id="eventForm">
+              <div class="dialog-head">
+                <div><span class="eyebrow" id="dialogEyebrow">安排一段时间</span><h2 id="dialogTitle">新建日程</h2></div>
+                <button class="icon-button" id="closeDialog" type="button" aria-label="关闭编辑">×</button>
+              </div>
+              <input type="hidden" id="eventId">
+              <label class="field full"><span>日程名称</span><input id="eventTitle" required maxlength="40" placeholder="例如：高三数学辅导"></label>
+              <div class="template-tools"><label class="field"><span>套用模板</span><select id="eventTemplate"><option value="">不使用模板</option></select></label><button class="button ghost" id="saveEventTemplate" type="button">保存为模板</button><button class="button ghost hidden" id="deleteEventTemplate" type="button">删除模板</button></div>
+              <label class="field full"><span>日期</span><input id="eventDate" type="date" required></label>
+              <div class="form-row">
+                <label class="field"><span>开始时间</span><div class="unified-picker" id="eventStartPicker"><input id="eventStart" type="hidden" value="19:00"><button class="unified-picker-button" id="eventStartButton" type="button"><b id="eventStartText">19:00</b><em class="dropdown-chevron"></em></button><div class="unified-picker-menu hidden" id="eventStartMenu"></div></div></label>
+                <label class="field"><span>结束时间</span><div class="unified-picker" id="eventEndPicker"><input id="eventEnd" type="hidden" value="19:30"><button class="unified-picker-button" id="eventEndButton" type="button"><b id="eventEndText">19:30</b><em class="dropdown-chevron"></em></button><div class="unified-picker-menu hidden" id="eventEndMenu"></div></div></label>
+              </div>
+              <div class="form-row">
+                <label class="field"><span>时长（小时）</span><input id="eventDuration" type="number" min="0.25" step="0.25" required value="0.5"></label>
+                <label class="field"><span>收入（元）</span><input id="eventIncome" type="number" min="0" step="100" required value="0"></label>
+              </div>
+              <label class="field full"><span>工作方式</span><div class="work-mode-switch" role="radiogroup" aria-label="工作方式"><label><input type="radio" name="eventWorkMode" value="online" checked><span>线上</span></label><label><input type="radio" name="eventWorkMode" value="offline"><span>线下</span></label></div></label>
+              <label class="field full"><span>标签</span>
+                <div class="tag-picker" id="tagPicker">
+                  <input id="eventTag" type="hidden" value="">
+                  <button class="tag-picker-button" id="tagPickerButton" type="button" aria-haspopup="listbox" aria-expanded="false">
+                    <span class="selected-tags" id="selectedTagList"><i class="tag-color-dot"></i><b>无标签</b></span><em class="dropdown-chevron"></em>
+                  </button>
+                  <div class="tag-menu hidden" id="tagMenu" role="listbox" aria-multiselectable="true"></div>
+                </div>
+              </label>
+              <div class="new-tag-editor hidden" id="newTagEditor">
+                <input id="newTagName" maxlength="16" placeholder="标签名称">
+                <input id="newTagColor" type="hidden" value="#4F6F52">
+                <div class="tag-color-palette" id="tagColorPalette" aria-label="选择标签颜色"></div>
+                <label class="custom-color-control"><span>自定义颜色</span><input id="customTagColor" type="color" value="#4F6F52"><b id="customColorValue">#4F6F52</b></label>
+                <p class="tag-editor-hint" id="tagEditorHint">选择一个容易辨认的颜色</p>
+                <div class="new-tag-actions"><button class="button danger hidden" id="deleteTagBtn" type="button">删除标签</button><span class="spacer"></span><button class="button ghost" id="cancelTagBtn" type="button">取消</button><button class="button primary" id="saveTagBtn" type="button">添加标签</button></div>
+              </div>
+              <label class="field full"><span>客户</span>
+                <div class="client-picker" id="clientPicker">
+                  <input id="eventClient" type="hidden" value="">
+                  <button class="client-picker-button" id="clientPickerButton" type="button" aria-haspopup="listbox" aria-expanded="false"><span><i class="client-avatar" id="selectedClientAvatar">—</i><b id="selectedClientName">无客户</b></span><em class="dropdown-chevron"></em></button>
+                  <div class="client-menu hidden" id="clientMenu" role="listbox"></div>
+                </div>
+              </label>
+              <div class="client-editor hidden" id="clientEditor">
+                <input id="clientNameInput" maxlength="30" placeholder="客户名称">
+                <p id="clientEditorHint">客户保存后可以重复选择</p>
+                <div><button class="button danger hidden" id="deleteClientBtn" type="button">删除客户</button><span class="spacer"></span><button class="button ghost" id="cancelClientBtn" type="button">取消</button><button class="button primary" id="saveClientBtn" type="button">添加客户</button></div>
+              </div>
+              <label class="field full"><span>重复</span><div class="unified-picker" id="eventRepeatPicker"><input id="eventRepeat" type="hidden" value="none"><button class="unified-picker-button" id="eventRepeatButton" type="button"><b id="eventRepeatText">不重复</b><em class="dropdown-chevron"></em></button><div class="unified-picker-menu hidden" id="eventRepeatMenu"></div></div></label>
+              <div class="repeat-editor hidden" id="repeatEditor">
+                <div class="repeat-custom hidden" id="repeatCustom">
+                  <label class="repeat-frequency-toggle"><input id="repeatUseFrequency" type="checkbox" checked><span>按固定频率重复</span></label>
+                  <div class="repeat-frequency-fields" id="repeatFrequencyFields"><span>每</span><input id="repeatInterval" type="number" min="1" max="99" value="2"><select id="repeatUnit"><option value="daily">天</option><option value="weekly">周</option><option value="monthly">月</option><option value="yearly">年</option></select></div>
+                  <div class="repeat-date-picker">
+                    <div class="repeat-date-head"><button id="repeatCalendarPrev" type="button" aria-label="上个月">‹</button><b id="repeatCalendarTitle">选择指定日期</b><button id="repeatCalendarNext" type="button" aria-label="下个月">›</button></div>
+                    <div class="repeat-calendar-week"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
+                    <div class="repeat-calendar" id="repeatCalendar"></div>
+                    <label class="repeat-manual"><span>手动输入日期</span><textarea id="repeatDatesInput" rows="2" placeholder="例如：2026-09-01, 2026-09-03"></textarea><small id="repeatDatesHint">也可以直接点击上面的日期，可选择多个</small></label>
+                  </div>
+                </div>
+                <label><span>结束日期</span><input id="repeatUntil" type="date"></label>
+                <small>按频率最多自动生成未来一年；指定日期不受此限制</small>
+              </div>
+              <label class="field full"><span>备注</span><textarea id="eventNote" rows="3" maxlength="200" placeholder="地点、课程内容或其他提醒…"></textarea></label>
+              <div class="dialog-actions">
+                <div class="delete-wrap">
+                  <button class="button danger hidden" id="deleteBtn" type="button">删除</button>
+                  <div class="delete-popover hidden" id="deletePopover">
+                    <strong>移入回收站？</strong><span>之后仍可恢复这条日程</span>
+                    <div><button class="mini-button" id="cancelDeleteBtn" type="button">取消</button><button class="mini-button danger-solid" id="confirmDeleteBtn" type="button">删除</button></div>
+                  </div>
+                </div>
+                <span class="spacer"></span>
+                <span class="autosave-status" id="autosaveStatus">修改后自动保存</span>
+                <button class="button ghost" id="cancelBtn" type="button">关闭</button>
+              </div>
+            </form>
+          </div>
+        </aside>
+      </section>
+
+      <section class="home-income-panel" id="homeOtherIncomePanel" aria-label="其他收入">
+        <div class="section-title"><div><span class="eyebrow">非工时收入</span><h2>其他收入</h2><small class="section-subtitle">投资、补助、奖学金和生活费等</small></div><div class="home-income-actions"><button class="button ghost" id="viewOtherIncome" type="button">查看全部</button><button class="button primary" id="addHomeOtherIncome" type="button">＋ 记录收入</button></div></div>
+        <div class="home-income-list" id="homeOtherIncomeList"></div>
+      </section>
+
+    </main>
+
+    <main class="week-export-page hidden" id="weekExportPage">
+      <header class="management-head week-export-head"><div><span class="eyebrow">分享与打印</span><h1>日程表输出</h1><small>仅输出 08:00–22:00，收入和备注不会出现在客户版本中</small></div><button class="button ghost" id="backFromExport" type="button">返回日历</button></header>
+      <section class="week-export-card">
+        <div class="week-export-toolbar">
+          <div class="export-week-nav"><button class="icon-button" id="exportWeekPrev" type="button" aria-label="上一周">‹</button><strong id="exportWeekTitle">本周</strong><button class="icon-button" id="exportWeekNext" type="button" aria-label="下一周">›</button></div>
+          <div class="export-mode-switch" role="group" aria-label="输出内容"><button class="active" data-export-mode="client" type="button">客户安排</button><button data-export-mode="free" type="button">空闲档期</button></div>
+          <div class="export-mode-switch" role="group" aria-label="输出范围"><button class="active" data-export-period="week" type="button">周表</button><button data-export-period="month" type="button">月表</button></div>
+          <div class="export-mode-switch" role="group" aria-label="输出样式"><button class="active" data-export-layout="calendar" type="button">日历</button><button data-export-layout="list" type="button">列表</button></div>
+          <div class="export-actions"><label class="export-option"><input id="exportHideTitle" type="checkbox"> 隐去日程名称</label><label class="export-option"><input id="exportHideClient" type="checkbox"> 隐去客户名称</label><button class="button ghost" id="copyWeekExport" type="button">复制文字</button><button class="button primary" id="printWeekExport" type="button">输出 PNG 图片</button></div>
+        </div>
+        <div class="export-client-row" id="exportClientRow"><span>选择客户</span><div class="export-client-choices" id="exportClientChoices"></div></div>
+        <div class="export-sheet" id="exportSheet"><div class="manager-empty">正在生成周表…</div></div>
+      </section>
+    </main>
+
+    <main class="management-page hidden" id="managementPage">
+      <header class="management-head"><div><span class="eyebrow" id="managementEyebrow">集中管理</span><h1 id="managementTitle">统计</h1></div><div class="management-head-actions"><div class="export-mode-switch stats-period-switch"><button class="active" data-stats-period="month" type="button">本月</button><button data-stats-period="year" type="button">本年</button><button data-stats-period="custom" type="button">自定义期间</button></div><button class="button ghost" id="backToCalendar" type="button">返回日历</button></div></header>
+
+      <section class="management-view stats-view hidden" id="statsView">
+        <div class="stats-controls"><label class="stats-year-month">年份<input id="statsYear" type="number" min="2000" max="2100"></label><label class="stats-year-month">月份<select id="statsMonth"></select></label><label class="stats-custom-date hidden">开始日期<input id="statsRangeStart" type="date"></label><label class="stats-custom-date hidden">结束日期<input id="statsRangeEnd" type="date"></label></div>
+        <div class="stats-cards">
+          <article class="stats-card income-combined" data-stats-card="income"><span id="statsPrimaryLabel">本月总收入</span><strong id="statsMonthIncome">¥0.00</strong><div class="stats-target-line"><span id="statsTargetLabel">收入目标</span><b id="statsPeriodTarget">¥0.00</b></div><small id="statsMonthPaidCount">0 个有收入日程</small></article>
+          <article class="stats-card" data-stats-card="count"><span id="statsScheduleCountLabel">本月日程数</span><strong id="statsScheduleCount">0 个</strong><small>全部日程</small></article>
+          <article class="stats-card" data-stats-card="hours"><span id="statsPrimaryHoursLabel">本月有收入小时数</span><strong id="statsMonthHours">0 小时</strong><small>仅统计有收入日程</small></article>
+          <article class="stats-card" data-stats-card="clients"><span id="statsClientsLabel">本月客户</span><strong id="statsClientCount">0 个</strong><small>有安排的客户</small></article>
+        </div>
+        <div class="stats-detail-grid"><section class="breakdown-card"><div class="section-title"><div><span class="eyebrow">分类统计</span><h2 id="breakdownTitle">标签构成</h2></div></div><div class="export-mode-switch stats-breakdown-tabs"><button class="active" data-breakdown-type="tag" type="button">标签构成</button><button data-breakdown-type="client" type="button">客户构成</button><button data-breakdown-type="mode" type="button">线上/线下</button></div><div class="breakdown-list" id="statsBreakdown"></div></section>
+          <section class="contribution-panel">
+            <div class="contribution-head"><div><span class="eyebrow" id="contributionPeriod">全部标签</span><h2 id="contributionTitle">所选年份时间贡献图</h2></div><div class="contribution-total"><strong id="contributionTotal">0</strong><span>小时投入</span></div></div>
+            <div class="contribution-filters" id="contributionTagFilters" aria-label="按标签筛选贡献图"></div>
+            <div class="contribution-scroll" id="contributionScroll"><div class="contribution-months" id="contributionMonths"></div><div class="contribution-body"><div class="contribution-weekdays"><span>一</span><span>三</span><span>五</span></div><div class="contribution-grid" id="contributionGraph" aria-label="所选年份每日工时图"></div></div></div><div class="contribution-multi-year hidden" id="contributionMultiYear"></div>
+            <div class="contribution-footer"><span>每个方格代表一天，颜色越深表示投入时间越多</span><div>少 <i class="level-0"></i><i class="level-1"></i><i class="level-2"></i><i class="level-3"></i><i class="level-4"></i> 多</div></div>
+          </section></div>
+      </section>
+
+      <section class="management-view entity-view hidden" id="tagsView"><div class="section-title"><div><span class="eyebrow">颜色分类</span><h2>全部标签</h2></div><button class="button primary" id="managerAddTag" type="button">＋ 新建标签</button></div><div class="entity-list" id="managerTagList"></div></section>
+      <section class="management-view entity-view hidden" id="clientsView"><div class="section-title"><div><span class="eyebrow">联系对象</span><h2>全部客户</h2></div><button class="button primary" id="managerAddClient" type="button">＋ 新建客户</button></div><div class="entity-list" id="managerClientList"></div></section>
+      <section class="management-view entity-view hidden" id="otherIncomeView"><div class="section-title income-page-head"><div><span class="eyebrow">非工时收入</span><h2>其他收入</h2><small class="section-subtitle" id="otherIncomeTotal">合计 ¥0.00</small></div><div class="income-page-actions"><div class="income-period-controls"><label>年份<input id="incomeYear" type="number" min="2000" max="2100" aria-label="其他收入年份"></label><label>月份<select id="incomeMonth" aria-label="其他收入月份"><option value="1">1月</option><option value="2">2月</option><option value="3">3月</option><option value="4">4月</option><option value="5">5月</option><option value="6">6月</option><option value="7">7月</option><option value="8">8月</option><option value="9">9月</option><option value="10">10月</option><option value="11">11月</option><option value="12">12月</option></select></label></div><button class="button primary" id="addOtherIncome" type="button">＋ 记录收入</button></div></div><div class="entity-list" id="otherIncomeList"></div></section>
+      <section class="management-view trash-view hidden" id="trashView"><div class="section-title"><div><span class="eyebrow">误删保护</span><h2>日程回收站</h2></div><span class="section-hint">删除的日程可在这里恢复</span></div><div class="entity-list" id="trashList"></div></section>
+
+      <section class="manager-editor hidden" id="managerEditor">
+        <div><span class="eyebrow" id="managerEditorEyebrow">新建</span><h2 id="managerEditorTitle">新建标签</h2></div>
+        <input id="managerEntityId" type="hidden"><input id="managerEntityType" type="hidden">
+        <label class="field"><span>名称</span><input id="managerEntityName" maxlength="30" placeholder="输入名称"></label>
+        <div id="managerColorArea"><span class="manager-field-label">颜色</span><div class="tag-color-palette" id="managerColorPalette"></div><label class="custom-color-control"><span>自定义颜色</span><input id="managerCustomColor" type="color" value="#4F6F52"><b id="managerColorValue">#4F6F52</b></label></div>
+        <div class="manager-editor-actions"><button class="button danger hidden" id="managerDeleteEntity" type="button">删除</button><span class="spacer"></span><button class="button ghost" id="managerCancelEdit" type="button">取消</button><button class="button primary" id="managerSaveEntity" type="button">保存</button></div>
+      </section>
+
+      <section class="manager-editor income-editor hidden" id="incomeEditor">
+        <div><span class="eyebrow" id="incomeEditorEyebrow">新建记录</span><h2 id="incomeEditorTitle">记录其他收入</h2></div>
+        <input id="otherIncomeId" type="hidden">
+        <label class="field"><span>收入来源</span><input id="otherIncomeName" maxlength="40" placeholder="例如：研究生补助"></label>
+        <div class="form-row"><label class="field"><span>日期</span><input id="otherIncomeDate" type="date"></label><label class="field"><span>金额（元）</span><input id="otherIncomeAmount" type="number" min="0" step="100" value="0"></label></div>
+        <label class="field"><div class="field-label-row"><span>标签（可多选）</span><button id="newOtherIncomeTag" type="button">＋ 新建标签</button></div><div class="income-tag-choices" id="otherIncomeTagChoices"></div></label>
+        <div class="form-row"><label class="field"><span>重复</span><select id="otherIncomeRepeat"><option value="none">不重复</option><option value="daily">每天</option><option value="weekly">每周</option><option value="monthly">每月</option><option value="yearly">每年</option><option value="custom">自定义日期</option></select></label><label class="field hidden" id="otherIncomeRepeatUntilField"><span>重复结束日期</span><input id="otherIncomeRepeatUntil" type="date"></label></div>
+        <div class="other-income-custom-picker hidden" id="otherIncomeCustomDatesField"><span class="manager-field-label">指定重复日期（可多选）</span><div class="repeat-date-picker"><div class="repeat-date-head"><button id="otherIncomeCalendarPrev" type="button">‹</button><b id="otherIncomeCalendarTitle">选择日期</b><button id="otherIncomeCalendarNext" type="button">›</button></div><div class="repeat-calendar-week"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div><div class="repeat-calendar" id="otherIncomeCalendar"></div></div></div>
+        <label class="field"><span>备注</span><textarea id="otherIncomeNote" rows="3" maxlength="200" placeholder="可选"></textarea></label>
+        <div class="manager-editor-actions"><button class="button danger hidden" id="deleteOtherIncome" type="button">删除记录</button><span class="spacer"></span><button class="button ghost" id="cancelOtherIncome" type="button">取消</button><button class="button primary" id="saveOtherIncome" type="button">保存</button></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="drawer-scrim hidden" id="drawerScrim"></div>
+  <aside class="side-drawer" id="sideDrawer" aria-hidden="true">
+    <div class="drawer-head"><span class="brand-mark image-mark"><img src="assets/work-calendar-pro-icon.png" alt=""></span><div><strong>工作日历pro</strong><small>集中管理你的时间价值</small></div><button class="icon-button" id="closeDrawer" type="button" aria-label="关闭菜单">×</button></div>
+    <nav class="drawer-nav"><button data-page="calendar" type="button"><span>▦</span><div><b>日历</b><small>回到日程安排</small></div></button><button data-page="stats" type="button"><span>⌁</span><div><b>统计</b><small>月收入、年收入与工时</small></div></button><button data-page="income" type="button"><span>¥</span><div><b>其他收入</b><small>补助、投资与生活费等</small></div></button><button data-page="entities" type="button"><span>◉</span><div><b>标签与客户</b><small>分类与联系对象集中管理</small></div></button><button data-page="trash" type="button"><span>♲</span><div><b>回收站</b><small>恢复误删的日程</small></div><em id="trashBadge">0</em></button></nav>
+    <div class="drawer-footer">让每一段时间，都有价值。<br><b>Every hour counts.</b></div>
+  </aside>
+
+  <div class="calendar-context-menu hidden" id="calendarContextMenu"><button id="contextCopy" type="button">复制日程 <kbd>Ctrl+C</kbd></button><button class="context-danger" id="contextDelete" type="button">删除日程 <kbd>Delete</kbd></button><button id="contextPaste" type="button">粘贴到这里 <kbd>Ctrl+V</kbd></button><button id="contextCancelPaste" type="button">取消待粘贴状态 <kbd>Esc</kbd></button></div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
