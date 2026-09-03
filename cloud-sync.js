@@ -25,7 +25,7 @@
     const result = await auth('token?grant_type=password', { email, password });
     localStorage.setItem(AUTH_KEY, JSON.stringify(result)); return result;
   }
-  async function signup(email, password) { return auth('signup', { email, password }); }
+  async function signup(email, password) { return auth('signup', { email, password, options: { email_redirect_to: `${window.location.origin}${window.location.pathname}` } }); }
   async function sync() {
     const current = session(); if (!current?.access_token || !current.user?.id) throw new Error('请先登录');
     const response = await fetch(`${SUPABASE_URL}/rest/v1/work_calendar_sync?user_id=eq.${encodeURIComponent(current.user.id)}&select=payload,updated_at`, { headers: headers(current.access_token) });
@@ -48,19 +48,26 @@
       try {
         let current = session();
         if (!current?.access_token) {
-          const email = prompt('请输入同步账号邮箱'); if (!email) return;
-          const password = prompt('请输入密码（不会保存明文）'); if (!password) return;
-          try { current = await login(email, password); }
-          catch (error) {
-            if (!window.confirm('登录失败，是否用此邮箱注册新账号？')) throw error;
-            const created = await signup(email, password);
-            if (!created.access_token) { notify('注册成功，请查收验证邮件后再点击同步'); return; }
-            localStorage.setItem(AUTH_KEY, JSON.stringify(created)); current = created;
-          }
+          const credentials = await credentialDialog(); if (!credentials) return;
+          try { current = credentials.mode === 'signup' ? await signup(credentials.email, credentials.password) : await login(credentials.email, credentials.password); }
+          catch (error) { notify(error.message); return; }
+          if (!current.access_token) { notify('注册成功，请查收验证邮件；验证后再点击云端同步'); return; }
+          localStorage.setItem(AUTH_KEY, JSON.stringify(current));
         }
         await sync();
       } catch (error) { notify(error.message); }
     }); nav.appendChild(button);
+  }
+  function credentialDialog() {
+    return new Promise(resolve => {
+      const overlay = document.createElement('div'); overlay.className = 'cloud-auth-overlay';
+      overlay.innerHTML = '<section class="cloud-auth-card"><button class="cloud-auth-close" aria-label="关闭">×</button><div class="cloud-auth-icon">↻</div><h2>同步你的工作日历</h2><p>登录后可在电脑与 iPhone 间同步日程、客户和收入。</p><label>邮箱<input type="email" autocomplete="email" placeholder="you@example.com"></label><label>密码<input type="password" autocomplete="current-password" placeholder="至少 6 位"></label><div class="cloud-auth-error"></div><button class="button primary cloud-auth-submit">登录并同步</button><button class="cloud-auth-switch" type="button">还没有账号？注册</button></section>';
+      document.body.appendChild(overlay); const card = overlay.querySelector('.cloud-auth-card'); const email = card.querySelector('input[type=email]'); const password = card.querySelector('input[type=password]'); const submit = card.querySelector('.cloud-auth-submit'); const error = card.querySelector('.cloud-auth-error'); const close = () => { overlay.remove(); resolve(null); }; let mode = 'login';
+      overlay.querySelector('.cloud-auth-close').onclick = close; overlay.addEventListener('click', event => { if (event.target === overlay) close(); });
+      overlay.querySelector('.cloud-auth-switch').onclick = event => { mode = mode === 'login' ? 'signup' : 'login'; event.target.textContent = mode === 'login' ? '还没有账号？注册' : '已有账号？返回登录'; submit.textContent = mode === 'login' ? '登录并同步' : '注册账号'; };
+      submit.onclick = () => { if (!email.value || password.value.length < 6) { error.textContent = '请输入有效邮箱和至少 6 位密码'; return; } overlay.remove(); resolve({ mode, email: email.value.trim(), password: password.value }); };
+      email.focus();
+    });
   }
   window.cloudSync = { login, signup, sync, snapshot, restore };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount); else mount();
