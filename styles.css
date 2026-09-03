@@ -13,6 +13,14 @@
   --font-ui: Inter, "SF Pro Display", "Segoe UI", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
 }
 
+/* PWA/mobile safe-area polish */
+html { -webkit-text-size-adjust: 100%; }
+body { overscroll-behavior-y: none; }
+@supports (padding: env(safe-area-inset-top)) {
+  .topbar { padding-top: max(18px, env(safe-area-inset-top)); }
+  .app-shell { padding-bottom: env(safe-area-inset-bottom); }
+}
+
 * { box-sizing: border-box; }
 body { margin: 0; background: radial-gradient(circle at 8% 0%, #eaf3eb 0, transparent 28%), radial-gradient(circle at 92% 8%, #eef0f7 0, transparent 24%), var(--paper); color: var(--ink); font-family: var(--font-ui); }
 button, input, select, textarea { font: inherit; }
