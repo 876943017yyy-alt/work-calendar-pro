@@ -9,7 +9,11 @@
     'schedule-ledger-trash-v1','schedule-ledger-other-income-v1',
     'schedule-ledger-income-targets-v1','schedule-ledger-templates-v1'
   ];
-  const notify = message => window.showToast?.(message) || window.alert(message);
+  const notify = message => {
+    let toast = document.getElementById('cloudSyncToast');
+    if (!toast) { toast = document.createElement('div'); toast.id = 'cloudSyncToast'; toast.className = 'cloud-sync-toast'; document.body.appendChild(toast); }
+    toast.textContent = message; toast.classList.add('visible'); clearTimeout(toast._timer); toast._timer = setTimeout(() => toast.classList.remove('visible'), 3600);
+  };
   const session = () => { try { return JSON.parse(localStorage.getItem(AUTH_KEY)) || null; } catch { return null; } };
   const headers = (token = '') => ({ apikey: SUPABASE_KEY, Authorization: `Bearer ${token || SUPABASE_KEY}`, 'Content-Type': 'application/json' });
   function snapshot() {
@@ -31,8 +35,10 @@
     const response = await fetch(`${SUPABASE_URL}/rest/v1/work_calendar_sync?user_id=eq.${encodeURIComponent(current.user.id)}&select=payload,updated_at`, { headers: headers(current.access_token) });
     if (!response.ok) throw new Error('读取云端数据失败');
     const rows = await response.json(); const local = snapshot();
-    if (rows[0]?.payload && Object.keys(local).length && !window.confirm('云端已有数据，是否用云端数据覆盖本机数据？取消则把本机数据上传到云端。')) {
-      await upload(local, current); notify('本机数据已同步到云端'); return;
+    if (rows[0]?.payload && Object.keys(local).length) {
+      const choice = await syncChoiceDialog();
+      if (choice === 'upload') { await upload(local, current); notify('本机数据已同步到云端'); return; }
+      if (choice !== 'download') return;
     }
     if (rows[0]?.payload) { restore(rows[0].payload); return; }
     await upload(local, current); notify('数据已首次同步到云端');
@@ -67,6 +73,15 @@
       overlay.querySelector('.cloud-auth-switch').onclick = event => { mode = mode === 'login' ? 'signup' : 'login'; event.target.textContent = mode === 'login' ? '还没有账号？注册' : '已有账号？返回登录'; submit.textContent = mode === 'login' ? '登录并同步' : '注册账号'; };
       submit.onclick = () => { if (!email.value || password.value.length < 6) { error.textContent = '请输入有效邮箱和至少 6 位密码'; return; } overlay.remove(); resolve({ mode, email: email.value.trim(), password: password.value }); };
       email.focus();
+    });
+  }
+  function syncChoiceDialog() {
+    return new Promise(resolve => {
+      const overlay = document.createElement('div'); overlay.className = 'cloud-auth-overlay';
+      overlay.innerHTML = '<section class="cloud-auth-card sync-choice-card"><button class="cloud-auth-close" aria-label="关闭">×</button><div class="cloud-auth-icon">⇄</div><h2>选择同步方向</h2><p>云端和本机都有数据，请选择要保留哪一份。</p><div class="sync-choice-actions"><button class="button primary" data-choice="download">使用云端数据</button><button class="button ghost" data-choice="upload">上传本机数据</button></div></section>';
+      document.body.appendChild(overlay); const finish = choice => { overlay.remove(); resolve(choice); };
+      overlay.querySelector('.cloud-auth-close').onclick = () => finish(null); overlay.addEventListener('click', event => { if (event.target === overlay) finish(null); });
+      overlay.querySelectorAll('[data-choice]').forEach(button => { button.onclick = () => finish(button.dataset.choice); });
     });
   }
   window.cloudSync = { login, signup, sync, snapshot, restore };
